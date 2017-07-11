@@ -5,6 +5,7 @@ var child_process = require('child_process');
 var os = require('os');
 var osName = require('os-name');
 var which = require('which');
+var copypasta = require("copy-paste");
 
 function run(cmd) {
   return (child_process.execSync(cmd, {
@@ -126,28 +127,30 @@ function getWatchmanVersion() {
 }
 
 module.exports.print = function(options) {
-  console.log('');
-  console.log('\x1b[4mEnvironment:\x1b[0m');
-  console.log('  OS: ', getOperatingSystemInfo());
-  console.log('  Node: ', getNodeVersion());
-  console.log('  Yarn: ', getYarnVersion());
-  console.log('  npm: ', getNpmVersion());
-  console.log('  Watchman: ', getWatchmanVersion());
-  console.log('  Xcode: ', getXcodeVersion());
-  console.log('  Android Studio: ', getAndroidStudioVersion());
-  console.log('');
+  var log = [];
+
+  log.push('');
+  log.push('Environment:');
+  log.push('  OS: ' + getOperatingSystemInfo());
+  log.push('  Node: ' + getNodeVersion());
+  log.push('  Yarn: ' + getYarnVersion());
+  log.push('  npm: ' + getNpmVersion());
+  log.push('  Watchman: ' + getWatchmanVersion());
+  log.push('  Xcode: ' + getXcodeVersion());
+  log.push('  Android Studio: ' + getAndroidStudioVersion());
+  log.push('');
 
   if (options) {
     if (options.packages) {
       try {
         var packageJson = require(process.cwd() + '/package.json');
       } catch (err) {
-        console.log('ERROR: package.json not found!');
-        console.log('');
+        log.push('ERROR: package.json not found!');
+        log.push('');
         return;
       }
 
-      console.log('\x1b[4mPackages:\x1b[0m (wanted => installed)');
+      log.push('Packages: (wanted => installed)');
 
       var devDependencies = packageJson.devDependencies || {};
       var dependencies = packageJson.dependencies || {};
@@ -161,7 +164,7 @@ module.exports.print = function(options) {
           } catch (err) {
             installed = 'Not Installed';
           }
-          console.log('  ' + dep + ': ' + wanted + ' => ' + installed);
+          log.push('  ' + dep + ': ' + wanted + ' => ' + installed);
         }
       };
 
@@ -172,7 +175,14 @@ module.exports.print = function(options) {
       } else if (typeof options.packages === 'boolean') {
         Object.keys(allDependencies).map(logFunction);
       }
-      console.log('');
+
+      log.push('');
+    }
+
+    if (options.clipboard) {
+      copypasta.copy(log.join('\n'))
     }
   }
+
+  console.log(log.join('\n'));
 };
